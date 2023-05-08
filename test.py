@@ -2,7 +2,7 @@ from predict import predict_from_args
 import os, sys
 import scipy.stats as st
 experiment="experiment_9"
-test_path = f'C:\\Users\\brand\\Documents\\Code\\PlayMore\\DevNet\\{experiment}\\test'
+test_path = f'{experiment}\\test'
 types = ["good", "crack", "leakage"]
 for t in types:
     sub_path = os.path.join(test_path, t)
@@ -18,7 +18,7 @@ for t in types:
         f.write(output)
 
         
-test_path = f'C:\\Users\\brand\\Documents\\Code\\PlayMore\\DevNet\\{experiment}\\test2'
+test_path = f'{experiment}\\test2'
 types = ["crack", "leakage"]
 for t in types:
     sub_path = os.path.join(test_path, t)
