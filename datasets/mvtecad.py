@@ -48,7 +48,7 @@ class MVTecAD(BaseADDataset):
             for file in outlier_file:
                 if 'png' in file[-3:] or 'PNG' in file[-3:] or 'jpg' in file[-3:] or 'npy' in file[-3:]:
                     outlier_data.append('test/' + cl + '/' + file)
-        if self.args.n_anomaly > len(outlier_data)/2:
+        if self.args.n_anomaly > len(outlier_data):
             print(len(outlier_data))
             print("Number of outlier data in training set should less than half of outlier datas!")
             sys.exit()
