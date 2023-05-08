@@ -1,3 +1,6 @@
+# Credits
+This Repo is a mirror of [deviation-network-image](https://github.com/Choubo/deviation-network-image) customized for application purposes. The original readme can be seen below.
+
 # Explainable Deep Few-shot Anomaly Detection with Deviation Networks
 By Guansong Pang, Choubo Ding, Chunhua Shen, Anton van den Hengel
 
