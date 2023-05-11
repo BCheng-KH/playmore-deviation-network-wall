@@ -28,9 +28,11 @@ class Trainer(object):
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.1)
 
         if args.cuda:
-           self.model = self.model.cuda()
-           self.criterion = self.criterion.cuda()
-
+            self.model = self.model.cuda()
+            self.criterion = self.criterion.cuda()
+        else:
+            self.model = self.model.to("cpu")
+            self.criterion = self.criterion.to("cpu")
     def train(self, epoch):
         train_loss = 0.0
         self.model.train()

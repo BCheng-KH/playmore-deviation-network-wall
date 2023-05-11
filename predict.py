@@ -44,6 +44,19 @@ def show_cam_on_image_only(img, mask, out_dir, name):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     cv2.imwrite(path_cam_img, np.uint8(255 * cam))
+def return_cam_on_image_only(img, mask):
+
+    img1 = img.copy()
+    img[:, :, 0] = img1[:, :, 2]
+    img[:, :, 1] = img1[:, :, 1]
+    img[:, :, 2] = img1[:, :, 0]
+
+    heatmap = cv2.applyColorMap(np.uint8(255*mask), cv2.COLORMAP_JET)
+    heatmap = np.float32(heatmap) / 255
+    cam = heatmap + np.float32(img)
+    cam = cam / np.max(cam)
+
+    return np.uint8(255 * cam)
 
 def load_image(path):
     if 'npy' in path[-3:]:
@@ -71,6 +84,15 @@ def predict(model, image, img_size):
     grad_temp = grad_temp.squeeze(0)
     grad_temp = gaussian_filter(grad_temp, sigma=4)
     return outlier_score, grad_temp
+def predict_score(model, image, img_size):
+    model.zero_grad()
+    transformer = transform(img_size)
+    inputs = transformer(image).view(1, 3, 448, 448).cuda()
+    inputs.requires_grad = True
+    output = model(inputs)
+    outlier_score = output.data.cpu().numpy()[0][0]
+
+    return outlier_score
 
 def predict_with_args(args):
     model = SemiADNet(args)
@@ -111,6 +133,26 @@ def predict_from_args(image_dir, output_dir, output_name, img_size = 448, ramdn_
     outlier_score, grad_temp = predict(model, image, img_size)
     raw = np.float32(cv2.resize(np.array(image), (448, 448))) / 255
     show_cam_on_image_only(raw, grad_temp, output_dir, output_name)
+    return outlier_score
+
+def generate_args(img_size = 448, ramdn_seed = 42, no_cuda = False, weight_name = 'model.pkl', experiment_dir = './experiment', n_scales = 2, backbone = 'resnet18', topk = 0.1):
+    args = model_args(ramdn_seed = ramdn_seed, no_cuda = no_cuda, weight_name = weight_name, experiment_dir = experiment_dir, n_scales = n_scales, backbone = backbone, topk = topk, img_size=img_size)
+    return args
+def load_model(args):
+    model = SemiADNet(args)
+    model.load_state_dict(torch.load(os.path.join(args.experiment_dir, args.weight_name)))
+    model = model.cuda()
+    model.eval()
+    return model
+def predict_with_model(model, image_dir, output_dir, output_name, img_size = 448):
+    image = load_image(image_dir)
+    outlier_score, grad_temp = predict(model, image, img_size)
+    raw = np.float32(cv2.resize(np.array(image), (448, 448))) / 255
+    return_cam_on_image_only(raw, grad_temp)
+    return outlier_score
+def predict_score_with_model(model, image_dir, img_size = 448):
+    image = load_image(image_dir)
+    outlier_score = predict_score(model, image, img_size)
     return outlier_score
     
 

@@ -9,7 +9,7 @@ from dataloaders.dataloader import build_dataloader
 from modeling.net import SemiADNet
 from tqdm import tqdm
 from utils import aucPerformance
-from modeling.layers import build_criterion
+from modeling.layers import build_criterion, build_criterion_cpu
 
 class Trainer(object):
 
@@ -21,16 +21,20 @@ class Trainer(object):
         self.train_loader, self.test_loader = build_dataloader(args, **kwargs)
 
         self.model = SemiADNet(args)
-
-        self.criterion = build_criterion(args.criterion)
+        if args.cuda:
+            self.criterion = build_criterion(args.criterion)
+        else:
+            self.criterion = build_criterion_cpu(args.criterion)
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.0002, weight_decay=1e-5)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.1)
 
         if args.cuda:
-           self.model = self.model.cuda()
-           self.criterion = self.criterion.cuda()
-
+            self.model = self.model.cuda()
+            self.criterion = self.criterion.cuda()
+        else:
+            self.model = self.model.to("cpu")
+            self.criterion = self.criterion.to("cpu")
     def train(self, epoch):
         train_loss = 0.0
         self.model.train()
