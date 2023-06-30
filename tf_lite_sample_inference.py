@@ -22,7 +22,10 @@ import tensorflow as tf
 import scipy.stats as st
 
 np.seterr(divide='ignore',invalid='ignore')
+
+# select the model to load
 model_name = "leakage"
+experiment="experiment_11"
 
 
 
@@ -43,11 +46,13 @@ def load_image(path):
     return Image.open(path).convert('RGB')
 
 transformer = transform(448)
-image = load_image("./experiment_11/test2/Crack/IMG_0361.JPG")
+
+# select the image to inference
+image = load_image(f"./{experiment}/test2/Crack/IMG_0361.JPG")
 sample_input = transformer(image).view(1, 3, 448, 448)
 
-
-tflite_model_path = f"./experiment_11/{model_name}_tflite.tflite"
+# the tflite model is loaded. adjust the load path as needed
+tflite_model_path = f"./{experiment}/{model_name}_tflite.tflite"
 
 interpreter = tf.lite.Interpreter(model_path=tflite_model_path)
 interpreter.allocate_tensors()
@@ -62,5 +67,7 @@ interpreter.invoke()
 
 output_data = interpreter.get_tensor(output_details[0]['index'])
 print("sample output: ")
+# the anomoly score is output
 print(output_data)
+# the anomoly score is converted to a probability and output
 print(f'{(1-(2*(1-st.norm.cdf(output_data[0][0]))))*100}%')

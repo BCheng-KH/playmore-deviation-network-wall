@@ -21,7 +21,10 @@ import tensorflow as tf
 
 
 np.seterr(divide='ignore',invalid='ignore')
+
+# choose which model to convert. these can be found in for example: ./{experiment}/crack.pkl
 model_name = "leakage"
+experiment="experiment_11"
 
 
 class model_args:
@@ -38,9 +41,10 @@ class model_args:
 
 
 
+# change the experiment direcotry in the line below
+args = model_args(ramdn_seed = 42, no_cuda = True, weight_name = f'{model_name}.pkl', experiment_dir = f'./{experiment}', n_scales = 2, backbone = 'resnet18', topk = 0.1, img_size=448)
 
-args = model_args(ramdn_seed = 42, no_cuda = True, weight_name = f'{model_name}.pkl', experiment_dir = './experiment_11', n_scales = 2, backbone = 'resnet18', topk = 0.1, img_size=448)
-
+# this loads in the model in pytorch
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 torch.manual_seed(args.ramdn_seed)
 model = SemiADNet(args)
@@ -49,7 +53,7 @@ model.load_state_dict(torch.load(os.path.join(args.experiment_dir, args.weight_n
 model.eval()
 
 
-
+# this creates the sample input.
 def transform(img_size):
     composed_transforms = transforms.Compose([
         transforms.Resize((img_size, img_size)),
@@ -64,14 +68,15 @@ def load_image(path):
     return Image.open(path).convert('RGB')
 
 transformer = transform(448)
-image = load_image("./experiment_11/test/crack/000.png")
+# change the sample input image below
+image = load_image(f"./{experiment}/test/crack/000.png")
 sample_input = transformer(image).view(1, 3, 448, 448)
 output = model(sample_input)
 print("first sample output: ")
 print(output)
 
-
-onnx_model_path = f"./experiment_11/{model_name}.onnx"
+# this is where the onnx file will be created
+onnx_model_path = f"./{experiment}/{model_name}.onnx"
 torch.onnx.export(
     model,                  # PyTorch Model
     sample_input,                    # Input tensor
@@ -81,23 +86,26 @@ torch.onnx.export(
     output_names=['output'] # Output tensor name (arbitary)
 )
 
-
+# this checks the model is generated properly
 onnx_model = onnx.load(onnx_model_path)
 onnx.checker.check_model(onnx_model)
 onnx.helper.printable_graph(onnx_model.graph)
 
+# this converts the onnx model to a tensorflow model. change where you want the tensorflow model to go below
 tf_rep = prepare(onnx_model)
-tf_model_path = f"./experiment_11/{model_name}_tf"
+tf_model_path = f"./{experiment}/{model_name}_tf"
 tf_rep.export_graph(tf_model_path)
 
-
+# this converts the tensorflow model to a tflite model
 converter = tf.lite.TFLiteConverter.from_saved_model(tf_model_path)
 tflite_model = converter.convert()
 
-tflite_model_path = f"./experiment_11/{model_name}_tflite.tflite"
+# this is where the tflite model is stored, change that below
+tflite_model_path = f"./{experiment}/{model_name}_tflite.tflite"
 with open(tflite_model_path, 'wb') as f:
     f.write(tflite_model)
 
+# this tests the tflite model
 interpreter = tf.lite.Interpreter(model_path=tflite_model_path)
 interpreter.allocate_tensors()
 
@@ -112,3 +120,5 @@ interpreter.invoke()
 output_data = interpreter.get_tensor(output_details[0]['index'])
 print("second sample output: ")
 print(output_data)
+
+# finally, your tflite model can be found for example: ./{experiment}/crack_tflite.tflite
