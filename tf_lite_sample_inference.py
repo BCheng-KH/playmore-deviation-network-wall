@@ -24,7 +24,7 @@ import scipy.stats as st
 np.seterr(divide='ignore',invalid='ignore')
 
 # select the model to load
-model_name = "leakage"
+model_name = "efficientnet-lite21"
 experiment="experiment_11"
 
 
@@ -45,17 +45,19 @@ def load_image(path):
         return Image.fromarray(img)
     return Image.open(path).convert('RGB')
 
-transformer = transform(448)
+transformer = transform(260)
 
 # select the image to inference
 image = load_image(f"./{experiment}/test2/Crack/IMG_0361.JPG")
-sample_input = transformer(image).view(1, 3, 448, 448)
-
+sample_input = transformer(image).view(1, 3, 260, 260)
+sample_input = sample_input.transpose(1, 2)
+sample_input = sample_input.transpose(2, 3)
 # the tflite model is loaded. adjust the load path as needed
-tflite_model_path = f"./{experiment}/{model_name}_tflite.tflite"
+tflite_model_path = f"./{experiment}/{model_name}.tflite"
 
 interpreter = tf.lite.Interpreter(model_path=tflite_model_path)
 interpreter.allocate_tensors()
+print(interpreter.get_input_details())
 
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
