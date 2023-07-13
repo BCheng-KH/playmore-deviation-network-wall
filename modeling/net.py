@@ -10,13 +10,16 @@ class SemiADNet(nn.Module):
         self.args = args
         self.feature_extractor = build_feature_extractor(self.args.backbone)
         self.conv = nn.Conv2d(in_channels=NET_OUT_DIM[self.args.backbone], out_channels=1, kernel_size=1, padding=0)
+        self.reverse_rgb = False
 
 
     def forward(self, image):
 
         if self.args.n_scales == 0:
             raise ValueError
-
+        if self.reverse_rgb:
+            image = image.transpose(3, 2)
+            image = image.transpose(2, 1)
         image_pyramid = list()
         for s in range(self.args.n_scales):
             image_scaled = F.interpolate(image, size=self.args.img_size // (2 ** s)) if s > 0 else image

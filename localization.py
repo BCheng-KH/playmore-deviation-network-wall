@@ -86,7 +86,7 @@ if __name__ == '__main__':
     for i in train_set.outlier_idx:
         model.zero_grad()
         sample = train_set.getitem(i)
-        inputs = sample['image'].view(1, 3, 448, 448).cuda()
+        inputs = sample['image'].view(1, 3, args.img_size, args.img_size).cuda()
         input.append(np.array(sample['raw_image']))
         inputs.requires_grad = True
         output = model(inputs)
@@ -108,8 +108,8 @@ if __name__ == '__main__':
         grad_block = list()
 
     for i, (cam, raw, label) in enumerate(zip(outliers_cam, input, seg_label)):
-        raw = np.float32(cv2.resize(np.array(raw), (448, 448))) / 255
-        label = cv2.resize(label, (448, 448)) / 255
+        raw = np.float32(cv2.resize(np.array(raw), (args.img_size, args.img_size))) / 255
+        label = cv2.resize(label, (args.img_size, args.img_size)) / 255
         show_cam_on_image(raw, cam, label, os.path.join(args.experiment_dir, 'vis'), str(i))
 
     aucs = list()
@@ -118,7 +118,7 @@ if __name__ == '__main__':
         print('Cannot find anomaly image')
         exit()
     for cam, label in zip(outliers_cam, seg_label):
-        label = cv2.resize(label, (448,448))
+        label = cv2.resize(label, (args.img_size,args.img_size))
         label = label > 0
         cam_line = cam.reshape(-1)
         label_line = label[:,:,0].reshape(-1)

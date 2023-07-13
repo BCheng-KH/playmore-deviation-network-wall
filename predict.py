@@ -73,7 +73,7 @@ def transform(img_size):
 def predict(model, image, img_size):
     model.zero_grad()
     transformer = transform(img_size)
-    inputs = transformer(image).view(1, 3, 448, 448).cuda()
+    inputs = transformer(image).view(1, 3, img_size, img_size).cuda()
     inputs.requires_grad = True
     output = model(inputs)
     outlier_score = output.data.cpu().numpy()[0][0]
@@ -87,7 +87,7 @@ def predict(model, image, img_size):
 def predict_score(model, image, img_size):
     model.zero_grad()
     transformer = transform(img_size)
-    inputs = transformer(image).view(1, 3, 448, 448).cuda()
+    inputs = transformer(image).view(1, 3, img_size, img_size).cuda()
     inputs.requires_grad = True
     output = model(inputs)
     outlier_score = output.data.cpu().numpy()[0][0]
@@ -104,7 +104,7 @@ def predict_with_args(args):
     img_dir = args.image_dir
     image = load_image(img_dir)
     outlier_score, grad_temp = predict(model, image, args.img_size)
-    raw = np.float32(cv2.resize(np.array(image), (448, 448))) / 255
+    raw = np.float32(cv2.resize(np.array(image), (args.img_size, args.img_size))) / 255
     show_cam_on_image_only(raw, grad_temp, args.output_dir, args.output_name)
     return outlier_score
     
@@ -131,7 +131,7 @@ def predict_from_args(image_dir, output_dir, output_name, img_size = 448, ramdn_
     model.eval()
     image = load_image(image_dir)
     outlier_score, grad_temp = predict(model, image, img_size)
-    raw = np.float32(cv2.resize(np.array(image), (448, 448))) / 255
+    raw = np.float32(cv2.resize(np.array(image), (img_size, img_size))) / 255
     show_cam_on_image_only(raw, grad_temp, output_dir, output_name)
     return outlier_score
 
@@ -147,7 +147,7 @@ def load_model(args):
 def predict_with_model(model, image_dir, output_dir, output_name, img_size = 448):
     image = load_image(image_dir)
     outlier_score, grad_temp = predict(model, image, img_size)
-    raw = np.float32(cv2.resize(np.array(image), (448, 448))) / 255
+    raw = np.float32(cv2.resize(np.array(image), (img_size, img_size))) / 255
     return_cam_on_image_only(raw, grad_temp)
     return outlier_score
 def predict_score_with_model(model, image_dir, img_size = 448):
